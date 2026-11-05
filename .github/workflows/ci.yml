@@ -35,9 +35,23 @@ jobs:
       - uses: maxim-lobanov/setup-xcode@v1
         with:
           xcode-version: latest-stable
+      # The project uses Xcode 27's project format, which older Xcode versions
+      # can't open. Skip (with a notice) until the runners have Xcode 27.
+      - name: Check the Xcode version
+        id: xcode
+        run: |
+          major=$(xcodebuild -version | head -1 | awk '{print $2}' | cut -d. -f1)
+          if [ "$major" -ge 27 ]; then
+            echo "supported=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "::notice title=App build skipped::The project needs Xcode 27 or later; this runner has Xcode $major."
+            echo "supported=false" >> "$GITHUB_OUTPUT"
+          fi
       - name: Install the Metal toolchain
+        if: steps.xcode.outputs.supported == 'true'
         run: xcodebuild -downloadComponent MetalToolchain
       - name: Build
+        if: steps.xcode.outputs.supported == 'true'
         run: |
           xcodebuild build \
             -project SeasonMyMac.xcodeproj \
