@@ -1,0 +1,25 @@
+name: Season idea
+description: Pitch a new season or holiday for the desktop.
+labels: [season]
+body:
+  - type: input
+    id: season
+    attributes:
+      label: Season or holiday
+      placeholder: Halloween
+    validations:
+      required: true
+  - type: textarea
+    id: effects
+    attributes:
+      label: What would happen on the desktop?
+      description: What falls, floats, hangs or reacts? How does it interact with windows, the Dock and the pointer?
+      placeholder: Bats flutter out from behind windows when you move them…
+    validations:
+      required: true
+  - type: checkboxes
+    id: help
+    attributes:
+      label: Want to help build it?
+      options:
+        - label: I'd like to work on this

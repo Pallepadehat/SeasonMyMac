@@ -1,0 +1,38 @@
+name: Bug report
+description: Something isn't working as it should.
+labels: [bug]
+body:
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened?
+      description: What did you see, and what did you expect to see instead? Screenshots or screen recordings help a lot.
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. Turn on lights along the top of the screen
+        2. Switch to a full-screen app
+        3. …
+    validations:
+      required: true
+  - type: input
+    id: macos
+    attributes:
+      label: macOS version
+      placeholder: macOS 27.2
+    validations:
+      required: true
+  - type: input
+    id: mac
+    attributes:
+      label: Mac and displays
+      placeholder: MacBook Pro 14" + external 4K display
+  - type: input
+    id: version
+    attributes:
+      label: SeasonMyMac version
+      description: Shown in Settings → General.
