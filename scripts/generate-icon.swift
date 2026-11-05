@@ -1,6 +1,6 @@
 #!/usr/bin/env swift  // Draws the SeasonMyMac app icon and logo.
 //
-//   swift Scripts/generate-icon.swift
+//   swift scripts/generate-icon.swift
 //
 // Writes every size the asset catalog needs, plus docs/logo.png. The artwork
 // follows Apple's macOS icon grid: an 824 × 824 pt rounded square centred on a

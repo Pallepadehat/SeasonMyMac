@@ -5,7 +5,7 @@ Thanks for wanting to help! Bug fixes, polish, performance work and new seasons 
 ## Getting started
 
 1. Fork and clone the repository.
-2. Open `SeasonMyMac.xcodeproj` in Xcode 27 or later and press **⌘R**.
+2. Open `SeasonMyMac.xcodeproj` in Xcode 27 or later and press **⌘R**. (The app itself runs on macOS 14 and later.)
 3. Run the simulation tests:
 
    ```sh
@@ -18,7 +18,7 @@ No Apple developer team is needed to build. See "Signing" in the [README](README
 ## Before you open a pull request
 
 - `swift test` passes in `Packages/SeasonKit`.
-- `swift format lint -r SeasonMyMac Packages/SeasonKit Scripts` reports nothing. Run `swift format -i -r …` to fix formatting automatically.
+- `swift format lint -r SeasonMyMac Packages/SeasonKit scripts` reports nothing. Run `swift format -i -r …` to fix formatting automatically.
 - The app builds without warnings.
 - For anything that runs every frame, check CPU in Activity Monitor with a **Release** build. Snow plus lights should stay at a few percent of one core.
 - For visual changes, include a screenshot or a short recording.
@@ -43,6 +43,18 @@ Seasons are the most fun thing to build. Roughly:
 5. **Settings.** Add its options to `AppSettings`. New fields get their defaults automatically, so no one's saved settings break. Then add a pane to `SettingsView`.
 
 Have an idea but not the time? [Pitch a season](../../issues/new?template=season_idea.yml).
+
+## Making a release
+
+Releases are made by the maintainer from a Mac with the signing certificate:
+
+1. Bump `MARKETING_VERSION` in the Xcode project (Target → General → Version).
+2. Add a `## [x.y.z] - date` section to `CHANGELOG.md`, and commit.
+3. Run `./scripts/release.sh`. It builds the app, packs it into `SeasonMyMac.dmg`, has Apple notarize it, tags the commit and publishes a GitHub release. `install.sh` always installs the newest release.
+
+Notarizing needs a Developer ID certificate and a one-time `xcrun notarytool store-credentials seasonmymac-notary`. Without them, run `./scripts/release.sh --without-notarizing`. It signs with the best certificate you have, and `install.sh` still opens the app without a warning.
+
+To only make the disk image, run `./scripts/make-dmg.sh` (add `--notarize` for a notarized one).
 
 ## Reporting bugs
 

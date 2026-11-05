@@ -16,7 +16,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Check formatting
-        run: swift format lint --strict -r SeasonMyMac Packages/SeasonKit Scripts
+        run: swift format lint --strict -r SeasonMyMac Packages/SeasonKit scripts
 
   test:
     name: SeasonKit tests

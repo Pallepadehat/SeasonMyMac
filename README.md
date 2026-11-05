@@ -10,7 +10,7 @@
 
 <p align="center">
   <a href="https://github.com/pallepadehat/SeasonMyMac/actions/workflows/ci.yml"><img src="https://github.com/pallepadehat/SeasonMyMac/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
-  <img src="https://img.shields.io/badge/macOS-27%2B-blue" alt="macOS 27 or later">
+  <img src="https://img.shields.io/badge/macOS-14%2B-blue" alt="macOS 14 or later">
   <img src="https://img.shields.io/badge/Swift-6-orange" alt="Swift 6">
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-green" alt="MIT license"></a>
 </p>
@@ -55,15 +55,56 @@
 
 ## Install
 
-SeasonMyMac isn't distributed as a download yet, so build it from source:
+You need a Mac on **macOS 14 or later**. Paste this into Terminal:
 
-1. Install Xcode 27 or later.
-2. Clone this repository and open `SeasonMyMac.xcodeproj`.
-3. Press **⌘R**. If Xcode asks for the Metal Toolchain, install it, or run `xcodebuild -downloadComponent MetalToolchain`.
+```sh
+curl -fsSL https://raw.githubusercontent.com/Pallepadehat/SeasonMyMac/main/install.sh | bash
+```
 
-SeasonMyMac lives in the menu bar (look for the ❄︎). To have snow and lights line up with the Dock exactly, allow it under **System Settings → Privacy & Security → Accessibility**. Without access, the Dock's size is estimated.
+It downloads the latest release, puts SeasonMyMac in your Applications folder (replacing an older copy), and opens it. Run the same command again to update.
 
-### Signing
+SeasonMyMac lives in the menu bar (look for the ❄︎). To have snow and lights line up with the Dock exactly, allow it under **System Settings → Privacy & Security → Accessibility** when asked. Without access, the Dock's size is estimated.
+
+<details>
+<summary><b>Or use the .dmg</b></summary>
+<br>
+
+Download **SeasonMyMac.dmg** from the [latest release](https://github.com/Pallepadehat/SeasonMyMac/releases/latest), open it and drag SeasonMyMac into Applications.
+
+Releases aren't notarized by Apple yet, so the first time, macOS says it can't check SeasonMyMac for malware. Click **Done**, then open **System Settings → Privacy & Security**, scroll down and click **Open Anyway**. Or run:
+
+```sh
+xattr -dr com.apple.quarantine /Applications/SeasonMyMac.app
+```
+
+The install script does this for you. It's [short and readable](install.sh), if you'd like to check it first.
+
+</details>
+
+<details>
+<summary><b>Uninstall</b></summary>
+<br>
+
+Quit SeasonMyMac from its menu, then:
+
+```sh
+rm -rf /Applications/SeasonMyMac.app
+defaults delete com.pallepadehat.SeasonMyMac
+```
+
+</details>
+
+### Build it yourself
+
+You need **Xcode 27 or later**.
+
+```sh
+git clone https://github.com/Pallepadehat/SeasonMyMac.git
+cd SeasonMyMac
+open SeasonMyMac.xcodeproj    # then press ⌘R
+```
+
+If Xcode asks for the Metal Toolchain, install it, or run `xcodebuild -downloadComponent MetalToolchain`. Or build from the command line with `./scripts/build.sh`.
 
 Builds work without an Apple developer team. To sign with yours, copy `Config/Local.xcconfig.example` to `Config/Local.xcconfig` and add your team ID. That file is git-ignored.
 
@@ -84,7 +125,8 @@ The app isn't sandboxed, because the sandbox doesn't allow reading other apps' w
 | [`SeasonMyMac/Overlay`](SeasonMyMac/Overlay) | One transparent, click-through window per display, and `SeasonView`, which runs every frame. |
 | [`SeasonMyMac/Desktop`](SeasonMyMac/Desktop) | Reads windows, the Dock and the pointer, and converts between coordinate spaces. |
 | [`SeasonMyMac/Rendering`](SeasonMyMac/Rendering) | The Metal renderer and shaders. |
-| [`Scripts`](Scripts) | `generate-icon.swift`, which draws the app icon and logo. |
+| [`scripts`](scripts) | Building, packaging and releasing, plus `generate-icon.swift`, which draws the app icon and logo. |
+| [`install.sh`](install.sh) | The one-command installer. |
 
 ## Contributing
 

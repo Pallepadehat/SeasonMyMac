@@ -12,3 +12,6 @@ DerivedData/
 
 # Personal signing settings (see Config/Local.xcconfig.example)
 Config/Local.xcconfig
+
+# Build output (scripts/build.sh)
+build/

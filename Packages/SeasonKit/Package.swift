@@ -7,7 +7,7 @@ import PackageDescription
 /// fast to unit test (`swift test`) and easy to reason about.
 let package = Package(
     name: "SeasonKit",
-    platforms: [.macOS(.v15)],
+    platforms: [.macOS(.v14)],
     products: [
         .library(name: "SeasonKit", targets: ["SeasonKit"])
     ],

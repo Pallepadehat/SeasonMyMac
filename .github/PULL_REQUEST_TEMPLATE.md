@@ -9,6 +9,6 @@
 ## Checklist
 
 - [ ] `swift test` passes in `Packages/SeasonKit`
-- [ ] `swift format lint -r SeasonMyMac Packages/SeasonKit Scripts` reports nothing
+- [ ] `swift format lint -r SeasonMyMac Packages/SeasonKit scripts` reports nothing
 - [ ] The app builds without warnings
 - [ ] CPU use with snow and lights on is still low (Activity Monitor, Release build)
