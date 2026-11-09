@@ -54,6 +54,8 @@ Releases are made by the maintainer from a Mac with the signing certificate:
 
 Notarizing needs a Developer ID certificate and a one-time `xcrun notarytool store-credentials seasonmymac-notary`. Without them, run `./scripts/release.sh --without-notarizing`. It signs with the best certificate you have, and `install.sh` still opens the app without a warning.
 
+Each release also carries `appcast.xml`, which is how the app finds updates ([Sparkle](https://sparkle-project.org)). It's signed with the `SeasonMyMac` Sparkle key in the maintainer's keychain; the public half is `SUPublicEDKey` in `Config/Info.plist`. **Back the key up** (`build/DerivedData/SourcePackages/artifacts/sparkle/Sparkle/bin/generate_keys --account SeasonMyMac -x seasonmymac-sparkle-key.txt`, then somewhere safe): without it, copies already out there can't update. Keep signing releases with the same certificate, too, since Sparkle checks that an update comes from the same developer.
+
 To only make the disk image, run `./scripts/make-dmg.sh` (add `--notarize` for a notarized one).
 
 ## Reporting bugs

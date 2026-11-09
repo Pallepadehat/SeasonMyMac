@@ -250,6 +250,33 @@ public struct SnowPile: Sendable {
         }
     }
 
+    /// Takes up to `depth` points of snow off every visible column within
+    /// `halfWidth` of `x`, the way a snowball rolling over them picks it up.
+    ///
+    /// - Returns: The area of snow taken, in pt².
+    mutating func scoop(around x: Float, halfWidth: Float, depth: Float) -> Float {
+        guard
+            depth > 0,
+            let first = column(at: max(minX, x - halfWidth)),
+            let last = column(at: min(maxX - 0.001, x + halfWidth))
+        else { return 0 }
+
+        var area: Float = 0
+        for column in first...last where isVisible[column] {
+            let taken = min(heights[column], depth)
+            heights[column] -= taken
+            area += taken * columnWidth
+        }
+        return area
+    }
+
+    /// The y coordinate of the snow's top under `x`, or `nil` when `x` isn't on
+    /// a visible part of this pile.
+    func snowTop(at x: Float) -> Float? {
+        guard let column = column(at: x), isVisible[column] else { return nil }
+        return top(ofColumn: column)
+    }
+
     private mutating func removeColumn(_ column: Int) -> ReleasedSnow? {
         let height = heights[column]
         heights[column] = 0

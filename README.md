@@ -26,17 +26,30 @@
 - Brush it away with the pointer, or shake it all off from the menu bar.
 - Stays put when you switch Spaces, and comes back with its window.
 
+**Snow Play** ⛄
+- Hold <kbd>⌃</kbd><kbd>⌥</kbd> and drag on a drift to scoop a snowball, or turn on **Snow Play** in the menu bar to play without holding keys.
+- Roll a snowball along the snow to make it bigger. Flick to throw it, and it splats against the edge of the screen.
+- Stack three snowballs and a snowman comes to life with a hat, a scarf, a carrot nose and stick arms. Pick the outfit, or let each one surprise you.
+- Snowmen ride along on windows, wobble when you move them, and topple if you shake too hard. A good throw knocks their head off.
+
 **Holiday lights**
-- A garland clipped along the top of the Dock, scalloping over the icons.
+- Along the Dock's rounded rim with the bulbs standing up, so they never cover an icon. Or draped, with a bulb hanging in every gap between icons.
+- They dance to Apple Music and Spotify: flashing on the beat and stepping through their colours.
 - A garland along the bottom edge of the menu bar.
 - Five colour sets (Classic, Warm White, Icy, Candy Cane, Aurora) and four effects (Steady, Twinkle, Chase, Breathe).
 - Bulbs swing in the breeze and when you nudge them with the pointer.
 - They never block a click.
 
+**Winter magic**
+- Santa's sleigh flies by now and then, trailing sparkles and dropping presents you can open.
+- Frost creeping in from the corners of the screen, a "Let It Snow!" blizzard, and a Christmas countdown in the menu bar.
+
 **Yours to tune**
 - Intensity, flake size, fall speed, wind, snow depth, build-up speed and stickiness.
 - Bulb size, density, brightness, loop width and droop.
+- Choose what each display shows: snow, Snow Play, lights, frost and Santa, display by display.
 - Hides automatically for full-screen apps, or for apps you choose.
+- Updates itself: the menu bar tells you when a new version is ready, and one click installs it.
 - Live previews in Settings, so you see every change before it hits the desktop.
 
 **Light on resources**

@@ -1,3 +1,4 @@
+import AppKit
 import SwiftUI
 
 /// A white SF Symbol on a rounded, gradient-filled square, like the icons in
@@ -17,22 +18,15 @@ struct SettingsIcon: View {
     }
 }
 
-/// The app's emblem: a snowflake on a frosty, round gradient.
+/// The app's icon.
 struct SeasonBadge: View {
     var size: CGFloat = 36
 
     var body: some View {
-        Image(systemName: "snowflake")
-            .font(.system(size: size * 0.5, weight: .semibold))
-            .foregroundStyle(.white)
+        Image(nsImage: NSApplication.shared.applicationIconImage)
+            .resizable()
+            .interpolation(.high)
             .frame(width: size, height: size)
-            .background(
-                LinearGradient(
-                    colors: [Color(red: 0.35, green: 0.65, blue: 1), Color(red: 0.2, green: 0.25, blue: 0.75)], startPoint: .topLeading,
-                    endPoint: .bottomTrailing),
-                in: .circle
-            )
-            .shadow(color: .blue.opacity(0.35), radius: size * 0.15, y: size * 0.05)
             .accessibilityHidden(true)
     }
 }
@@ -105,11 +99,8 @@ struct PreviewCard<Content: View>: View {
             content
             if let caption {
                 Text(caption)
-                    .font(.caption.weight(.medium))
-                    .foregroundStyle(.white.opacity(0.75))
-                    .padding(.horizontal, 8)
-                    .padding(.vertical, 4)
-                    .background(.ultraThinMaterial.opacity(0.6), in: .capsule)
+                    .font(.system(size: 11))
+                    .foregroundStyle(.white.opacity(0.6))
                     .padding(10)
             }
         }
@@ -150,5 +141,36 @@ struct AccessibilityStatusRow: View {
             }
         }
         .padding(.vertical, 2)
+    }
+}
+
+/// The first row of a pane, like System Settings' Wi-Fi or Bluetooth panes:
+/// the pane's icon and name, a short description, and its main switch.
+struct PaneHeader: View {
+    let pane: SettingsPane
+    let description: LocalizedStringKey
+    var isOn: Binding<Bool>?
+
+    var body: some View {
+        HStack(spacing: 12) {
+            SettingsIcon(systemName: pane.systemImage, color: pane.color, size: 34)
+            VStack(alignment: .leading, spacing: 2) {
+                Text(pane.title)
+                    .font(.system(size: 13, weight: .semibold))
+                Text(description)
+                    .font(.system(size: 12))
+                    .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+            Spacer(minLength: 16)
+            if let isOn {
+                Toggle(isOn: isOn) {
+                    Text(pane.title)
+                }
+                .labelsHidden()
+                .toggleStyle(.switch)
+            }
+        }
+        .padding(.vertical, 4)
     }
 }

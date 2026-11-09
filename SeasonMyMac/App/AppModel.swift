@@ -22,6 +22,17 @@ final class AppModel {
     /// Accessibility access lets snow and lights find the Dock exactly.
     private(set) var isAccessibilityGranted: Bool
 
+    /// Snow Play: the pointer grabs snow without holding any keys.
+    private(set) var isPlayModeOn = false
+
+    /// Today, refreshed so the Christmas countdown ticks over at midnight.
+    private(set) var today = Date()
+
+    let updater = Updater()
+
+    /// What's playing in Apple Music or Spotify, for the lights.
+    var music: MusicSync { overlays.music }
+
     var launchesAtLogin: Bool {
         didSet {
             guard launchesAtLogin != (SMAppService.mainApp.status == .enabled) else { return }
@@ -50,10 +61,18 @@ final class AppModel {
         launchesAtLogin = SMAppService.mainApp.status == .enabled
         overlays = OverlayManager(settings: saved)
         isAccessibilityGranted = overlays.desktop.dockLocator.isAccessGranted
+        overlays.onPlayModeChange = { [weak self] isOn in self?.isPlayModeOn = isOn }
     }
 
     /// Shows the effects and, the first time, asks for Accessibility access.
     func start() {
+        updater.start()
+        Timer.scheduledTimer(withTimeInterval: 60, repeats: true) { [weak self] _ in
+            MainActor.assumeIsolated {
+                guard let self, !Calendar.current.isDate(self.today, inSameDayAs: Date()) else { return }
+                self.today = Date()
+            }
+        }
         overlays.apply(settings)
         if settings.needsDock {
             askForAccessibilityOnce()
@@ -62,6 +81,67 @@ final class AppModel {
 
     func shakeOffAllSnow() {
         overlays.shakeOffAllSnow()
+    }
+
+    // MARK: Winter fun
+
+    func setPlayMode(_ isOn: Bool) {
+        overlays.setPlayMode(isOn)
+    }
+
+    func buildSnowman() {
+        overlays.buildSnowman()
+    }
+
+    func clearSnowmen() {
+        overlays.clearSnowmen()
+    }
+
+    func letItSnow() {
+        overlays.letItSnow()
+    }
+
+    func callSanta() {
+        overlays.callSanta()
+    }
+
+    /// Opens a present in the middle of the screen with the pointer.
+    func openPresent() {
+        let screen = NSScreen.screens.first { $0.frame.contains(NSEvent.mouseLocation) } ?? NSScreen.main
+        guard let frame = screen?.visibleFrame else { return }
+        GiftReveal.shared.show(at: NSPoint(x: frame.midX, y: frame.midY - 160), on: screen)
+    }
+
+    /// Whole days until Christmas Day: 0 on the day itself.
+    var daysUntilChristmas: Int {
+        let calendar = Calendar.current
+        let start = calendar.startOfDay(for: today)
+        let year = calendar.component(.year, from: start)
+        var christmas = calendar.date(from: DateComponents(year: year, month: 12, day: 25)) ?? start
+        if christmas < start {
+            christmas = calendar.date(from: DateComponents(year: year + 1, month: 12, day: 25)) ?? start
+        }
+        return calendar.dateComponents([.day], from: start, to: christmas).day ?? 0
+    }
+
+    // MARK: Displays
+
+    /// Changes what one display shows, switching to per-display choices.
+    func setEffects(_ effects: DisplayEffects, for display: DisplayInfo) {
+        if settings.visibility.displays != .custom {
+            // Start from what each display shows now, so nothing else changes.
+            for other in DisplayInfo.connected where settings.visibility.displayEffects[other.id] == nil {
+                let showsAll = settings.visibility.displays == .all || other.isMain
+                settings.visibility.displayEffects[other.id] =
+                    showsAll ? DisplayEffects() : DisplayEffects(snow: false, snowPlay: false, dockLights: false, topLights: false, frost: false, sleigh: false)
+            }
+            settings.visibility.displays = .custom
+        }
+        settings.visibility.displayEffects[display.id] = effects
+    }
+
+    func identifyDisplays() {
+        DisplayIdentifier.show()
     }
 
     // MARK: Accessibility

@@ -14,7 +14,7 @@ struct SnowPreview: View {
     @Environment(\.controlActiveState) private var activeState
 
     var body: some View {
-        PreviewCard(caption: settings.isEnabled ? "Live preview — try brushing the snow" : "Snow is off") {
+        PreviewCard(caption: settings.isEnabled ? "Move the pointer through the snow" : "Snow is off") {
             TimelineView(.animation(minimumInterval: 1.0 / 30, paused: !settings.isEnabled || activeState == .inactive)) { timeline in
                 Canvas { context, size in
                     model.advance(to: timeline.date, size: size, settings: settings)
@@ -120,7 +120,7 @@ struct LightsPreview: View {
     @Environment(\.controlActiveState) private var activeState
 
     var body: some View {
-        PreviewCard(caption: settings.isEnabled ? "Live preview — nudge the bulbs" : "Lights are off") {
+        PreviewCard(caption: settings.isEnabled ? "Move the pointer over the bulbs" : "Lights are off") {
             TimelineView(.animation(minimumInterval: 1.0 / 30, paused: !settings.isEnabled || activeState == .inactive)) { timeline in
                 Canvas { context, size in
                     model.advance(to: timeline.date, size: size, settings: settings)
@@ -155,15 +155,14 @@ private final class LightsPreviewModel {
         let iconSize: CGFloat = 44
         let count = 7
         let width = CGFloat(count) * (iconSize + 8) + 16
-        dock = CGRect(x: (size.width - width) / 2, y: size.height - iconSize - 34, width: width, height: iconSize + 16)
+        dock = CGRect(x: (size.width - width) / 2, y: size.height - iconSize - 40, width: width, height: iconSize + 16)
         icons = (0..<count).map { index in
             CGRect(x: dock.minX + 12 + CGFloat(index) * (iconSize + 8), y: dock.minY + 8, width: iconSize, height: iconSize)
         }
 
-        let gaps = zip(icons, icons.dropFirst()).map { ($0.maxX + $1.minX) / 2 }
-        let xs = [icons[0].minX - 2] + gaps + [icons[icons.count - 1].maxX + 2]
-        let anchors = xs.map { SIMD2(Float($0.rounded()), Float(dock.minY) + 1.5) }
-        lights.hang(between: anchors, sag: Float(iconSize) * 0.12, bulbSpacing: 26 / Float(settings.density))
+        let garland = DockGarland.layout(style: settings.dockStyle, frame: dock, items: icons, density: settings.density)
+        lights.standsUpright = garland.standsUpright
+        lights.hang(between: garland.anchors, sag: garland.sag, bulbSpacing: garland.bulbSpacing)
         lights.apply(settings)
 
         let dt = lastDate.map { Float(min(date.timeIntervalSince($0), 1.0 / 15)) } ?? 1.0 / 30
@@ -174,7 +173,7 @@ private final class LightsPreviewModel {
     }
 
     func draw(in context: inout GraphicsContext, settings: LightSettings) {
-        context.fill(Path(roundedRect: dock, cornerRadius: 16), with: .color(.white.opacity(0.16)))
+        context.fill(Path(roundedRect: dock, cornerRadius: min(dock.height * 0.32, 34)), with: .color(.white.opacity(0.16)))
         for (index, icon) in icons.enumerated() {
             let color = Self.iconColors[index % Self.iconColors.count]
             context.fill(

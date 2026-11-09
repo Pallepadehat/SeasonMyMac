@@ -9,6 +9,16 @@ extension LightPalette {
         case .icy: "Icy"
         case .candyCane: "Candy Cane"
         case .aurora: "Aurora"
+        case .gold: "Gold"
+        case .peppermint: "Peppermint"
+        case .frosted: "Frosted"
+        case .fireside: "Fireside"
+        case .forest: "Forest"
+        case .royal: "Royal"
+        case .nordic: "Nordic"
+        case .pastel: "Pastel"
+        case .neon: "Neon"
+        case .rainbow: "Rainbow"
         }
     }
 
@@ -24,6 +34,9 @@ extension LightAnimation {
         case .twinkle: "Twinkle"
         case .chase: "Chase"
         case .breathe: "Breathe"
+        case .sparkle: "Sparkle"
+        case .alternate: "Alternate"
+        case .colorWave: "Color Wave"
         }
     }
 
@@ -33,69 +46,79 @@ extension LightAnimation {
         case .twinkle: "sparkles"
         case .chase: "arrow.right.circle"
         case .breathe: "waveform.path"
+        case .sparkle: "sparkle"
+        case .alternate: "circle.lefthalf.filled"
+        case .colorWave: "rainbow"
         }
     }
 }
 
-/// Glowing dots in a palette's colours.
-struct PaletteSwatch: View {
+/// A circle split into a palette's colours, like the accent colour picker in System Settings.
+struct PaletteDot: View {
     let palette: LightPalette
-    var dotSize: CGFloat = 10
+    var size: CGFloat = 20
+    var isSelected = false
 
     var body: some View {
-        HStack(spacing: dotSize * 0.4) {
-            ForEach(Array(repeatedColors.enumerated()), id: \.offset) { _, color in
-                Circle()
-                    .fill(color.gradient)
-                    .frame(width: dotSize, height: dotSize)
-                    .shadow(color: color.opacity(0.8), radius: dotSize * 0.35)
+        Circle()
+            .fill(AngularGradient(stops: stops, center: .center, angle: .degrees(-90)))
+            .overlay(Circle().strokeBorder(.black.opacity(0.12), lineWidth: 0.5))
+            .overlay {
+                if isSelected {
+                    Circle()
+                        .fill(.white)
+                        .frame(width: size * 0.32, height: size * 0.32)
+                        .shadow(color: .black.opacity(0.25), radius: 1)
+                }
             }
-        }
+            .frame(width: size, height: size)
+            .padding(3)
+            .overlay {
+                Circle().strokeBorder(isSelected ? Color.accentColor : .clear, lineWidth: 2)
+            }
     }
 
-    /// Always four dots, so every swatch has the same width.
-    private var repeatedColors: [Color] {
+    /// Hard-edged slices, one per colour.
+    private var stops: [Gradient.Stop] {
         let colors = palette.swatchColors
-        return (0..<4).map { colors[$0 % colors.count] }
+        let slice = 1 / Double(colors.count)
+        return colors.enumerated().flatMap { index, color in
+            [Gradient.Stop(color: color, location: Double(index) * slice), Gradient.Stop(color: color, location: Double(index + 1) * slice)]
+        }
     }
 }
 
-/// A grid of palette cards to pick from.
+/// A grid of palettes to pick from.
 struct PalettePicker: View {
     @Binding var selection: LightPalette
+    /// Shows each palette's name underneath (in Settings); otherwise names show on hover.
+    var showsTitles = true
 
     var body: some View {
-        LazyVGrid(columns: [GridItem(.adaptive(minimum: 104), spacing: 10)], spacing: 10) {
+        let columns = [GridItem(.adaptive(minimum: showsTitles ? 64 : 26), spacing: showsTitles ? 8 : 6, alignment: .top)]
+        LazyVGrid(columns: columns, alignment: .leading, spacing: showsTitles ? 12 : 6) {
             ForEach(LightPalette.allCases) { palette in
                 let isSelected = palette == selection
                 Button {
                     selection = palette
                 } label: {
-                    VStack(spacing: 8) {
-                        PaletteSwatch(palette: palette)
-                            .padding(.vertical, 10)
-                            .frame(maxWidth: .infinity)
-                            .background(Color(red: 0.08, green: 0.1, blue: 0.22), in: .rect(cornerRadius: 8, style: .continuous))
-                        Text(palette.title)
-                            .font(.caption.weight(isSelected ? .semibold : .regular))
-                            .foregroundStyle(isSelected ? .primary : .secondary)
-                    }
-                    .padding(6)
-                    .background {
-                        RoundedRectangle(cornerRadius: 10, style: .continuous)
-                            .fill(isSelected ? Color.accentColor.opacity(0.12) : .clear)
-                    }
-                    .overlay {
-                        RoundedRectangle(cornerRadius: 10, style: .continuous)
-                            .strokeBorder(isSelected ? Color.accentColor : .secondary.opacity(0.2), lineWidth: isSelected ? 2 : 1)
+                    VStack(spacing: 4) {
+                        PaletteDot(palette: palette, size: showsTitles ? 22 : 18, isSelected: isSelected)
+                        if showsTitles {
+                            Text(palette.title)
+                                .font(.system(size: 11))
+                                .foregroundStyle(isSelected ? .primary : .secondary)
+                                .lineLimit(1)
+                        }
                     }
                     .contentShape(.rect)
                 }
                 .buttonStyle(.plain)
+                .help(Text(palette.title))
                 .accessibilityLabel(Text(palette.title))
                 .accessibilityAddTraits(isSelected ? .isSelected : [])
             }
         }
-        .padding(.vertical, 4)
+        .padding(.vertical, showsTitles ? 4 : 0)
     }
 }

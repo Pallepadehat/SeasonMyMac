@@ -15,7 +15,30 @@ public struct SnowWorld: Sendable {
 
     public private(set) var size: SIMD2<Float>
     public private(set) var flakes: [Flake] = []
-    public private(set) var piles: [SnowPile] = []
+    public internal(set) var piles: [SnowPile] = []
+
+    // MARK: Play
+
+    /// Tunables for snowballs, snowmen and splats.
+    public var play = PlayConfiguration()
+
+    /// Snowballs (and presents) in the world: held, flying or resting.
+    public internal(set) var snowballs: [Snowball] = []
+    public internal(set) var snowmen: [Snowman] = []
+    /// Splats of snow stuck to the screen's edges or a window, fading away.
+    public internal(set) var splats: [Splat] = []
+    /// Short-lived, coloured glints: a snowman coming to life, a present opening.
+    public internal(set) var sparkles: [Sparkle] = []
+
+    var heldID: Int?
+    /// The snowman being carried, and where on it the pointer took hold.
+    var heldSnowmanID: Int?
+    var heldSnowmanGrip: SIMD2<Float> = .zero
+    var heldTarget: SIMD2<Float> = .zero
+    var nextBodyID = 1
+    /// Snowballs and snowmen on windows that are out of sight, like their snow.
+    var stashedSnowballs: [SurfaceID: [Snowball]] = [:]
+    var stashedSnowmen: [SurfaceID: [Snowman]] = [:]
 
     /// Snow on windows that are out of sight but still exist (on another
     /// Space, minimized, or hidden). It comes back when the window does.
@@ -24,8 +47,8 @@ public struct SnowWorld: Sendable {
     /// A surface that hasn't moved for this long is considered at rest.
     private let stopDelay: Float = 0.07
 
-    private var random: SplitMix64
-    private var time: Float = 0
+    var random: SplitMix64
+    var time: Float = 0
     private var spawnBudget: Float = 0
     private var lastCursor: SIMD2<Float>?
     private var clumpCount = 0
@@ -45,7 +68,7 @@ public struct SnowWorld: Sendable {
     /// `true` while something on screen moves fast enough to deserve a high
     /// frame rate: tumbling clumps, or snow riding on a window being dragged.
     public var isAnimatingQuickly: Bool {
-        clumpCount >= 20 || piles.contains { time - $0.lastMotionTime < 0.3 }
+        clumpCount >= 20 || piles.contains { time - $0.lastMotionTime < 0.3 } || isPlayAnimating
     }
 
     /// `true` when there's no settled snow anywhere on screen.
@@ -78,6 +101,7 @@ public struct SnowWorld: Sendable {
         moveFlakes(dt: dt)
         settleStoppedSurfaces()
         brushSnow(with: cursor, dt: dt)
+        stepPlay(dt: dt)
     }
 
     /// Flakes per second for the current screen width and intensity.
@@ -240,6 +264,7 @@ public struct SnowWorld: Sendable {
         // Windows that were stashed and are no longer around have been closed.
         stashedPiles = stashedPiles.filter { hiddenIDs.contains($0.key) }
         piles = next
+        syncPlayWithSurfaces(keeping: hiddenIDs)
     }
 
     /// Updates a pile whose surface is still on screen.
@@ -319,13 +344,14 @@ public struct SnowWorld: Sendable {
         for index in piles.indices {
             spawnSnow(from: piles[index].removeAll(), velocity: SIMD2(0, -120))
         }
+        shakeLooseEverything()
     }
 
     // MARK: Cursor
 
     private mutating func brushSnow(with cursor: SIMD2<Float>?, dt: Float) {
         defer { lastCursor = cursor }
-        guard configuration.cursorBrushesSnow, let cursor, let lastCursor else { return }
+        guard configuration.cursorBrushesSnow, !isHolding, let cursor, let lastCursor else { return }
 
         let velocity = (cursor - lastCursor) / dt
         guard length(velocity) >= configuration.brushMinimumSpeed else { return }
@@ -342,7 +368,7 @@ public struct SnowWorld: Sendable {
 
     /// Turns released snow into falling clumps and a puff of drifting powder.
     /// Together they carry the snow's mass, so it can pile up again below.
-    private mutating func spawnSnow(from released: [SnowPile.ReleasedSnow], velocity: SIMD2<Float>) {
+    mutating func spawnSnow(from released: [SnowPile.ReleasedSnow], velocity: SIMD2<Float>) {
         let inherited = clamped(velocity, maxLength: 700)
         for slice in released {
             let clumpShare = slice.area * (1 - configuration.powderFraction)
@@ -359,7 +385,7 @@ public struct SnowWorld: Sendable {
         }
     }
 
-    private mutating func spawnSpill(_ spill: SnowPile.Spill) {
+    mutating func spawnSpill(_ spill: SnowPile.Spill) {
         let probability = spill.amount * configuration.columnWidth / configuration.clumpArea
         guard flakes.count < configuration.maxFlakes, Float.random(in: 0...1, using: &random) < probability else { return }
         flakes.append(makeClump(at: SIMD2(spill.x, spill.y), velocity: SIMD2(0, 10)))
@@ -414,16 +440,4 @@ public struct SnowWorld: Sendable {
         let whole = expected.rounded(.down)
         return Int(whole) + (Float.random(in: 0..<1, using: &random) < expected - whole ? 1 : 0)
     }
-}
-
-// MARK: - Vector helpers
-
-private func length(_ vector: SIMD2<Float>) -> Float {
-    (vector * vector).sum().squareRoot()
-}
-
-private func clamped(_ vector: SIMD2<Float>, maxLength: Float) -> SIMD2<Float> {
-    let currentLength = length(vector)
-    guard currentLength > maxLength else { return vector }
-    return vector * (maxLength / currentLength)
 }

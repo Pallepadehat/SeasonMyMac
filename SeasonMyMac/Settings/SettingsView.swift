@@ -6,7 +6,12 @@ import UniformTypeIdentifiers
 /// The Settings window: a sidebar of panes, like System Settings.
 struct SettingsView: View {
     @Bindable var model: AppModel
-    @State private var selection: SettingsPane = .snow
+    @State private var selection: SettingsPane
+
+    init(model: AppModel, pane: SettingsPane = .snow) {
+        self.model = model
+        _selection = State(initialValue: pane)
+    }
 
     var body: some View {
         NavigationSplitView {
@@ -39,14 +44,17 @@ struct SettingsView: View {
         switch selection {
         case .general: GeneralPane(model: model)
         case .snow: SnowPane(model: model)
+        case .play: PlayPane(model: model)
         case .lights: LightsPane(model: model)
+        case .extras: ExtrasPane(model: model)
+        case .displays: DisplaysPane(model: model)
         case .apps: AppsPane(model: model)
         }
     }
 }
 
 enum SettingsPane: String, CaseIterable, Identifiable {
-    case general, snow, lights, apps
+    case general, snow, play, lights, extras, displays, apps
 
     var id: Self { self }
 
@@ -54,8 +62,11 @@ enum SettingsPane: String, CaseIterable, Identifiable {
         switch self {
         case .general: "General"
         case .snow: "Snow"
+        case .play: "Snow Play"
         case .lights: "Lights"
-        case .apps: "Apps & Displays"
+        case .extras: "Winter Magic"
+        case .displays: "Displays"
+        case .apps: "Apps"
         }
     }
 
@@ -63,7 +74,10 @@ enum SettingsPane: String, CaseIterable, Identifiable {
         switch self {
         case .general: "gearshape.fill"
         case .snow: "snowflake"
+        case .play: "figure.stand"
         case .lights: "lightbulb.max.fill"
+        case .extras: "sparkles"
+        case .displays: "display.2"
         case .apps: "macwindow.on.rectangle"
         }
     }
@@ -72,7 +86,10 @@ enum SettingsPane: String, CaseIterable, Identifiable {
         switch self {
         case .general: .gray
         case .snow: .blue
+        case .play: .cyan
         case .lights: .orange
+        case .extras: .red
+        case .displays: .indigo
         case .apps: .purple
         }
     }
@@ -120,7 +137,16 @@ private struct GeneralPane: View {
 
             Section("Startup") {
                 Toggle("Open at Login", isOn: $model.launchesAtLogin)
+                Toggle("Show days until Christmas in the menu bar", isOn: $model.settings.extras.countdownInMenuBar)
+                if model.settings.extras.countdownInMenuBar {
+                    Picker("Countdown", selection: $model.settings.extras.countdownStyle) {
+                        Text("\(model.daysUntilChristmas) days until Christmas").tag(CountdownStyle.full)
+                        Text("\(model.daysUntilChristmas) days").tag(CountdownStyle.short)
+                    }
+                }
             }
+
+            UpdatesSection(updater: model.updater)
 
             Section {
                 Picker("Frame Rate", selection: $model.settings.performance) {
@@ -142,7 +168,7 @@ private struct GeneralPane: View {
 
             Section {
                 HStack {
-                    Button("Shake Off All Snow", systemImage: "wind", action: model.shakeOffAllSnow)
+                    Button("Shake Off All Snow", action: model.shakeOffAllSnow)
                     Spacer()
                     Button("Restore Defaults…", role: .destructive) {
                         isConfirmingReset = true
@@ -185,11 +211,12 @@ private struct SnowPane: View {
     var body: some View {
         Form {
             Section {
+                PaneHeader(pane: .snow, description: "Snow falls across your desktop and settles on windows and the Dock.", isOn: snow.isEnabled)
+            }
+
+            Section {
                 SnowPreview(settings: model.settings.snow)
                     .listRowInsets(EdgeInsets())
-                Toggle(isOn: snow.isEnabled) {
-                    Label("Let It Snow", systemImage: "snowflake")
-                }
             }
 
             Group {
@@ -232,7 +259,7 @@ private struct SnowPane: View {
 
                 Section("Interaction") {
                     Toggle("Brush snow away with the pointer", isOn: snow.cursorBrushesSnow)
-                    Button("Shake Off All Snow", systemImage: "wind", action: model.shakeOffAllSnow)
+                    Button("Shake Off All Snow", action: model.shakeOffAllSnow)
                 }
             }
             .disabled(!model.settings.snow.isEnabled)
@@ -268,16 +295,24 @@ private struct LightsPane: View {
     var body: some View {
         Form {
             Section {
+                PaneHeader(pane: .lights, description: "Strings of holiday lights along the Dock and the top of the screen.", isOn: lights.isEnabled)
+            }
+
+            Section {
                 LightsPreview(settings: model.settings.lights)
                     .listRowInsets(EdgeInsets())
-                Toggle(isOn: lights.isEnabled) {
-                    Label("Holiday Lights", systemImage: "lightbulb.max.fill")
-                }
             }
 
             Group {
                 Section {
-                    Toggle("Draped over the Dock", isOn: lights.onDock)
+                    Toggle("On the Dock", isOn: lights.onDock)
+                    if model.settings.lights.onDock {
+                        Picker("Dock Style", selection: lights.dockStyle) {
+                            Text("Along the Rim").tag(DockLightStyle.rim)
+                            Text("Draped Between Icons").tag(DockLightStyle.draped)
+                        }
+                        .pickerStyle(.segmented)
+                    }
                     if model.settings.lights.onDock, !model.isAccessibilityGranted {
                         AccessibilityStatusRow(isGranted: false, request: model.requestAccessibility)
                     }
@@ -306,7 +341,7 @@ private struct LightsPane: View {
                 } header: {
                     Text("Top of Screen")
                 } footer: {
-                    Text("The wire is clipped along the bottom edge of the menu bar. Wider loops and more droop look cosier; short, tight loops look neater.")
+                    Text("The wire hangs from the bottom edge of the menu bar.")
                         .foregroundStyle(.secondary)
                 }
                 .disabled(!model.settings.lights.alongTop)
@@ -314,6 +349,8 @@ private struct LightsPane: View {
                 Section("Colors") {
                     PalettePicker(selection: lights.palette)
                 }
+
+                MusicSection(model: model)
 
                 Section("Style") {
                     Picker("Animation", selection: lights.effect) {
@@ -344,11 +381,11 @@ private struct AppsPane: View {
     var body: some View {
         Form {
             Section {
+                PaneHeader(pane: .apps, description: "Pause the effects for certain apps, or keep snow off their windows.")
+            }
+
+            Section {
                 Toggle("Hide when an app is full screen", isOn: $model.settings.visibility.hidesInFullScreen)
-                Picker("Show on", selection: $model.settings.visibility.displays) {
-                    Text("All Displays").tag(VisibilitySettings.DisplayMode.all)
-                    Text("Main Display Only").tag(VisibilitySettings.DisplayMode.main)
-                }
             } header: {
                 Text("Visibility")
             } footer: {

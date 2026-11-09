@@ -41,6 +41,21 @@ fi
 grep -E "warning: .*SeasonMyMac/" build/xcodebuild.log | sort -u || true
 [[ -d "$APP" ]] || { echo "Build failed"; exit 1; }
 
+# Sparkle's helpers (the installer, the updater app) come signed ad hoc, and Xcode only re-signs the framework around
+# them. Notarization, and Sparkle's own check of an update, need every piece signed by us.
+if [[ "${SEASONMYMAC_SIGN:-}" == "developer-id" ]]; then
+  SPARKLE="$APP/Contents/Frameworks/Sparkle.framework/Versions/B"
+  sign() { codesign --force --sign "Developer ID Application" --options runtime --timestamp "$@"; }
+  sign "$SPARKLE/XPCServices/Installer.xpc"
+  sign --preserve-metadata=entitlements "$SPARKLE/XPCServices/Downloader.xpc"
+  sign "$SPARKLE/Autoupdate"
+  sign "$SPARKLE/Updater.app"
+  sign "$APP/Contents/Frameworks/Sparkle.framework"
+  # And the app again, as its signature covers the framework.
+  sign --preserve-metadata=entitlements,requirements,flags "$APP"
+  codesign --verify --deep --strict "$APP" || { echo "The app's signature doesn't check out."; exit 1; }
+fi
+
 rm -rf build/SeasonMyMac.app
 ditto "$APP" build/SeasonMyMac.app
 echo "Built build/SeasonMyMac.app"
